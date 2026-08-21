@@ -1,0 +1,2265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>LabelForge - Excel Labels</title>
+
+<!-- Only external library required: SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root {
+    --purple: #70458f;
+    --purple-dark: #43275b;
+    --purple-light: #eee5f5;
+    --purple-soft: #f8f3fa;
+    --border: #ddd0e7;
+    --text: #25192e;
+    --muted: #75647d;
+    --green: #317a55;
+    --white: #ffffff;
+    --danger: #a64646;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg, #f8f3fa, #ece2f2);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 22px;
+}
+
+.app {
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    box-shadow: 0 5px 18px rgba(65, 40, 85, 0.06);
+}
+
+.brand h1 {
+    color: var(--purple-dark);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.brand p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+button,
+.upload-button {
+    border: 0;
+    border-radius: 9px;
+    padding: 10px 15px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+button:hover,
+.upload-button:hover {
+    transform: translateY(-1px);
+}
+
+.primary {
+    background: var(--purple);
+    color: white;
+}
+
+.primary:hover {
+    background: #5f397a;
+}
+
+.secondary {
+    background: #eee7f3;
+    color: var(--purple-dark);
+}
+
+.secondary:hover {
+    background: #e3d7e9;
+}
+
+.green {
+    background: var(--green);
+    color: white;
+}
+
+.green:hover {
+    background: #286746;
+}
+
+.file-input {
+    display: none;
+}
+
+/* =========================================================
+   FILE INFO
+========================================================= */
+
+.file-info {
+    margin-top: 12px;
+    padding: 10px 13px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* =========================================================
+   PANEL
+========================================================= */
+
+.panel {
+    margin-top: 16px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 17px;
+    box-shadow: 0 4px 16px rgba(65,40,85,0.04);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.panel-title {
+    color: var(--purple-dark);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.panel-subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.small-button {
+    padding: 7px 10px;
+    font-size: 11px;
+}
+
+/* =========================================================
+   COLUMN SELECTION
+========================================================= */
+
+.columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.column-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    background: #fbf9fc;
+    border-radius: 9px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.column-item:hover {
+    border-color: #b99dca;
+    background: #f8f2fb;
+}
+
+.column-item input {
+    accent-color: var(--purple);
+    cursor: pointer;
+}
+
+.column-name {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.column-letter {
+    font-size: 10px;
+    color: var(--purple-dark);
+    background: var(--purple-light);
+    border-radius: 5px;
+    padding: 2px 5px;
+}
+
+.empty {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* =========================================================
+   SELECTED ORDER
+========================================================= */
+
+.order-panel {
+    margin-top: 16px;
+    background: #faf7fc;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.order-title {
+    font-size: 12px;
+    color: var(--purple-dark);
+    font-weight: 700;
+    margin-bottom: 9px;
+}
+
+.order-help {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+}
+
+.selected-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    min-height: 40px;
+}
+
+.selected-column {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 10px;
+    background: white;
+    border: 1px solid #d7c7df;
+    border-radius: 8px;
+    cursor: grab;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(70,40,90,0.04);
+}
+
+.selected-column:active {
+    cursor: grabbing;
+}
+
+.selected-column.dragging {
+    opacity: 0.4;
+}
+
+.drag-icon {
+    color: #9279a0;
+    font-size: 14px;
+}
+
+.order-number {
+    min-width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--purple);
+    color: white;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+/* =========================================================
+   CITY + STATE
+========================================================= */
+
+.address-options {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.address-options label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.address-options select {
+    border: 1px solid var(--border);
+    background: white;
+    padding: 7px 9px;
+    border-radius: 7px;
+    font-size: 12px;
+    color: var(--text);
+}
+
+.address-options input {
+    accent-color: var(--purple);
+}
+
+/* =========================================================
+   LABEL SECTION
+========================================================= */
+
+.label-section {
+    margin-top: 17px;
+}
+
+.label-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.label-count {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* =========================================================
+   LABEL GRID
+========================================================= */
+
+.label-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+/* =========================================================
+   LABEL
+========================================================= */
+
+.label {
+    background: white;
+    border: 1px solid #d7cbdc;
+    border-radius: 13px;
+    padding: 14px;
+    min-height: 140px;
+    box-shadow: 0 3px 10px rgba(60,40,75,0.04);
+}
+
+.label-to {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--purple-dark);
+    margin-bottom: 8px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #eee7f1;
+}
+
+.label-line {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: 2px 0;
+    word-break: break-word;
+}
+
+.label-footer {
+    margin-top: 9px;
+    padding-top: 6px;
+    border-top: 1px dashed #e2d9e5;
+    text-align: right;
+    color: #a091a8;
+    font-size: 9px;
+}
+
+.empty-screen {
+    background: white;
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    padding: 45px 20px;
+    text-align: center;
+    color: var(--muted);
+    grid-column: 1 / -1;
+}
+
+.empty-screen-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+/* =========================================================
+   PREVIEW MODAL
+========================================================= */
+
+.preview-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(25,18,30,0.78);
+    z-index: 9999;
+    display: none;
+    overflow: auto;
+    padding: 20px;
+}
+
+.preview-overlay.active {
+    display: block;
+}
+
+.preview-header {
+    max-width: 1100px;
+    margin: 0 auto 14px;
+    background: white;
+    border-radius: 10px;
+    padding: 10px 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.preview-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--purple-dark);
+}
+
+.preview-page {
+    max-width: 1050px;
+    margin: 0 auto 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.preview-page .label-grid {
+    gap: 11px;
+}
+
+/* =========================================================
+   PRINT AREA
+========================================================= */
+
+#printArea {
+    display: none;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    body {
+        padding: 10px;
+    }
+
+    .header {
+        padding: 14px;
+    }
+
+    .actions {
+        width: 100%;
+    }
+
+    .actions button,
+    .upload-button {
+        flex: 1;
+        text-align: center;
+    }
+
+    .label-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .label {
+        min-height: auto;
+    }
+}
+
+/* =========================================================
+   PRINT
+========================================================= */
+
+@page {
+    size: A4 portrait;
+    margin: 8mm;
+}
+
+@media print {
+
+    body {
+        background: white;
+        padding: 0;
+        margin: 0;
+    }
+
+    .app,
+    .preview-overlay {
+        display: none !important;
+    }
+
+    #printArea {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 5mm 7mm;
+        width: 100%;
+    }
+
+    .print-label {
+        border: 1px solid #999;
+        border-radius: 3px;
+        padding: 4mm;
+        min-height: 40mm;
+        background: white;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-to {
+        font-size: 12pt;
+        font-weight: 700;
+        margin-bottom: 3mm;
+        padding-bottom: 2mm;
+        border-bottom: 0.3mm solid #ddd;
+    }
+
+    .print-line {
+        font-size: 10pt;
+        line-height: 1.3;
+        padding: 1mm 0;
+        word-break: break-word;
+    }
+
+    .print-footer {
+        margin-top: 2mm;
+        padding-top: 1.5mm;
+        border-top: 0.2mm dashed #ccc;
+        font-size: 7pt;
+        color: #777;
+        text-align: right;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="header">
+
+        <div class="brand">
+            <h1>📦 LabelForge</h1>
+            <p>Excel to printable labels</p>
+        </div>
+
+        <div class="actions">
+
+            <label class="upload-button primary">
+                📂 Upload Excel
+                <input
+                    type="file"
+                    id="fileInput"
+                    class="file-input"
+                    accept=".xlsx,.xls"
+                >
+            </label>
+
+            <button
+                type="button"
+                class="secondary"
+                id="previewButton"
+            >
+                👁 Preview
+            </button>
+
+            <button
+                type="button"
+                class="green"
+                id="printButton"
+            >
+                🖨 Print
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILE INFO
+    ====================================================== -->
+
+    <div
+        class="file-info"
+        id="fileInfo"
+    >
+        No Excel file loaded.
+    </div>
+
+
+    <!-- =====================================================
+         COLUMN SELECTION
+    ====================================================== -->
+
+    <div class="panel">
+
+        <div class="panel-header">
+
+            <div>
+                <div class="panel-title">
+                    🏷️ Select columns
+                </div>
+
+                <div class="panel-subtitle">
+                    Select the columns you want to appear on the label.
+                </div>
+            </div>
+
+            <div class="panel-actions">
+
+                <button
+                    type="button"
+                    class="secondary small-button"
+                    id="selectAllButton"
+                >
+                    Select All
+                </button>
+
+                <button
+                    type="button"
+                    class="secondary small-button"
+                    id="clearAllButton"
+                >
+                    Clear All
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="columnsContainer"
+            class="columns"
+        >
+            <div class="empty">
+                Upload an Excel file to see columns.
+            </div>
+        </div>
+
+
+        <!-- =================================================
+             DRAG ORDER
+        ================================================== -->
+
+        <div class="order-panel">
+
+            <div class="order-title">
+                ↕ Arrange label sequence
+            </div>
+
+            <div
+                id="selectedColumns"
+                class="selected-columns"
+            >
+                <span class="empty">
+                    Select columns above.
+                </span>
+            </div>
+
+            <div class="order-help">
+                Drag the selected columns to arrange them
+                in any order you want.
+                Example: 1 → 2 → 3 or 3 → 1 → 2.
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CITY + STATE OPTION
+        ================================================== -->
+
+        <div class="address-options">
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="joinCityState"
+                >
+                Put City + State on one line
+            </label>
+
+            <select id="cityColumn">
+                <option value="">City column</option>
+            </select>
+
+            <select id="stateColumn">
+                <option value="">State column</option>
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         LABELS
+    ====================================================== -->
+
+    <div class="label-section">
+
+        <div class="label-toolbar">
+
+            <div
+                class="label-count"
+                id="labelCount"
+            >
+                No labels
+            </div>
+
+        </div>
+
+
+        <div
+            id="labelGrid"
+            class="label-grid"
+        >
+
+            <div class="empty-screen">
+
+                <div class="empty-screen-icon">
+                    📄
+                </div>
+
+                Upload Excel and select columns.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PREVIEW
+========================================================== -->
+
+<div
+    id="previewOverlay"
+    class="preview-overlay"
+>
+
+    <div class="preview-header">
+
+        <div class="preview-title">
+            👁 Print Preview
+        </div>
+
+        <button
+            type="button"
+            class="secondary"
+            id="closePreviewButton"
+        >
+            ✕ Close
+        </button>
+
+    </div>
+
+    <div id="previewPages"></div>
+
+</div>
+
+
+<!-- =========================================================
+     PRINT AREA
+========================================================== -->
+
+<div id="printArea"></div>
+
+
+<script>
+(function () {
+
+"use strict";
+
+
+/* ============================================================
+   STATE
+============================================================ */
+
+let rows = [];
+let columns = [];
+
+/*
+    selectedColumns contains the actual column indexes.
+
+    Example:
+
+    [0, 1, 2]
+        = A B C
+
+    [2, 0, 1]
+        = C A B
+
+    [1, 2, 0]
+        = B C A
+*/
+
+let selectedColumns = [];
+
+
+/*
+    Dragging information.
+*/
+
+let draggedColumnIndex = null;
+
+
+/* ============================================================
+   DOM
+============================================================ */
+
+const fileInput =
+    document.getElementById("fileInput");
+
+const fileInfo =
+    document.getElementById("fileInfo");
+
+const columnsContainer =
+    document.getElementById("columnsContainer");
+
+const selectedColumnsContainer =
+    document.getElementById("selectedColumns");
+
+const labelGrid =
+    document.getElementById("labelGrid");
+
+const labelCount =
+    document.getElementById("labelCount");
+
+const previewButton =
+    document.getElementById("previewButton");
+
+const printButton =
+    document.getElementById("printButton");
+
+const selectAllButton =
+    document.getElementById("selectAllButton");
+
+const clearAllButton =
+    document.getElementById("clearAllButton");
+
+const joinCityState =
+    document.getElementById("joinCityState");
+
+const cityColumn =
+    document.getElementById("cityColumn");
+
+const stateColumn =
+    document.getElementById("stateColumn");
+
+const previewOverlay =
+    document.getElementById("previewOverlay");
+
+const previewPages =
+    document.getElementById("previewPages");
+
+const closePreviewButton =
+    document.getElementById("closePreviewButton");
+
+const printArea =
+    document.getElementById("printArea");
+
+
+/* ============================================================
+   HTML ESCAPE
+============================================================ */
+
+function escapeHTML(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* ============================================================
+   COLUMN LETTER
+============================================================ */
+
+function getColumnLetter(index) {
+
+    let result = "";
+
+    index++;
+
+    while (index > 0) {
+
+        const remainder =
+            (index - 1) % 26;
+
+        result =
+            String.fromCharCode(
+                65 + remainder
+            ) + result;
+
+        index =
+            Math.floor(
+                (index - 1) / 26
+            );
+    }
+
+    return result;
+}
+
+
+/* ============================================================
+   GET CELL VALUE
+============================================================ */
+
+function getValue(row, columnIndex) {
+
+    if (
+        columnIndex === undefined ||
+        columnIndex === null
+    ) {
+        return "";
+    }
+
+    const key =
+        columns[columnIndex];
+
+    if (!key) {
+        return "";
+    }
+
+    const value =
+        row[key];
+
+    if (
+        value === undefined ||
+        value === null
+    ) {
+        return "";
+    }
+
+    return String(value).trim();
+}
+
+
+/* ============================================================
+   COLUMN SELECTOR
+============================================================ */
+
+function renderColumnSelectors() {
+
+    if (!columns.length) {
+
+        columnsContainer.innerHTML =
+            '<div class="empty">' +
+            'Upload an Excel file to see columns.' +
+            '</div>';
+
+        return;
+    }
+
+
+    let html = "";
+
+
+    columns.forEach(
+        function (name, index) {
+
+            const checked =
+                selectedColumns.includes(index);
+
+
+            html +=
+                '<label class="column-item">' +
+
+                    '<input ' +
+                        'type="checkbox" ' +
+                        'data-index="' +
+                        index +
+                        '" ' +
+                        (checked ? "checked" : "") +
+                    '>' +
+
+                    '<span class="column-letter">' +
+                        getColumnLetter(index) +
+                    '</span>' +
+
+                    '<span class="column-name">' +
+                        escapeHTML(name) +
+                    '</span>' +
+
+                '</label>';
+        }
+    );
+
+
+    columnsContainer.innerHTML =
+        html;
+
+
+    columnsContainer
+        .querySelectorAll(
+            "input[type='checkbox']"
+        )
+        .forEach(
+            function (checkbox) {
+
+                checkbox.addEventListener(
+                    "change",
+                    function () {
+
+                        const index =
+                            Number(
+                                this.dataset.index
+                            );
+
+
+                        if (this.checked) {
+
+                            /*
+                                IMPORTANT:
+
+                                Add to END of the
+                                current sequence.
+
+                                This means if the user clicks:
+
+                                B
+                                A
+                                C
+
+                                the order becomes:
+
+                                B → A → C
+                            */
+
+                            if (
+                                !selectedColumns.includes(
+                                    index
+                                )
+                            ) {
+
+                                selectedColumns.push(
+                                    index
+                                );
+                            }
+
+                        } else {
+
+                            selectedColumns =
+                                selectedColumns.filter(
+                                    function (item) {
+                                        return item !== index;
+                                    }
+                                );
+                        }
+
+
+                        renderSelectedColumns();
+                        renderLabels();
+                    }
+                );
+            }
+        );
+}
+
+
+/* ============================================================
+   SELECTED COLUMN ORDER
+============================================================ */
+
+function renderSelectedColumns() {
+
+    if (!selectedColumns.length) {
+
+        selectedColumnsContainer.innerHTML =
+            '<span class="empty">' +
+            'Select columns above.' +
+            '</span>';
+
+        return;
+    }
+
+
+    let html = "";
+
+
+    selectedColumns.forEach(
+        function (columnIndex, position) {
+
+            html +=
+                '<div ' +
+                    'class="selected-column" ' +
+                    'draggable="true" ' +
+                    'data-column-index="' +
+                        columnIndex +
+                    '">' +
+
+                    '<span class="drag-icon">☰</span>' +
+
+                    '<span class="order-number">' +
+                        (position + 1) +
+                    '</span>' +
+
+                    '<span>' +
+                        escapeHTML(
+                            columns[columnIndex]
+                        ) +
+                    '</span>' +
+
+                '</div>';
+        }
+    );
+
+
+    selectedColumnsContainer.innerHTML =
+        html;
+
+
+    setupDragAndDrop();
+}
+
+
+/* ============================================================
+   DRAG AND DROP
+============================================================ */
+
+function setupDragAndDrop() {
+
+    const items =
+        selectedColumnsContainer
+            .querySelectorAll(
+                ".selected-column"
+            );
+
+
+    items.forEach(
+        function (item) {
+
+            item.addEventListener(
+                "dragstart",
+                function () {
+
+                    draggedColumnIndex =
+                        Number(
+                            this.dataset.columnIndex
+                        );
+
+                    this.classList.add(
+                        "dragging"
+                    );
+                }
+            );
+
+
+            item.addEventListener(
+                "dragend",
+                function () {
+
+                    this.classList.remove(
+                        "dragging"
+                    );
+
+                    draggedColumnIndex =
+                        null;
+                }
+            );
+
+
+            item.addEventListener(
+                "dragover",
+                function (event) {
+
+                    event.preventDefault();
+
+                    if (
+                        draggedColumnIndex === null
+                    ) {
+                        return;
+                    }
+
+
+                    const targetColumnIndex =
+                        Number(
+                            this.dataset.columnIndex
+                        );
+
+
+                    if (
+                        draggedColumnIndex ===
+                        targetColumnIndex
+                    ) {
+                        return;
+                    }
+
+
+                    const oldPosition =
+                        selectedColumns.indexOf(
+                            draggedColumnIndex
+                        );
+
+
+                    const newPosition =
+                        selectedColumns.indexOf(
+                            targetColumnIndex
+                        );
+
+
+                    if (
+                        oldPosition === -1 ||
+                        newPosition === -1
+                    ) {
+                        return;
+                    }
+
+
+                    selectedColumns.splice(
+                        oldPosition,
+                        1
+                    );
+
+
+                    selectedColumns.splice(
+                        newPosition,
+                        0,
+                        draggedColumnIndex
+                    );
+
+
+                    renderSelectedColumns();
+                    renderColumnSelectors();
+                    renderLabels();
+
+
+                    /*
+                        Keep the dragged item active.
+                    */
+
+                    draggedColumnIndex =
+                        draggedColumnIndex;
+                }
+            );
+        }
+    );
+}
+
+
+/* ============================================================
+   CITY / STATE DROPDOWNS
+============================================================ */
+
+function renderAddressDropdowns() {
+
+    let cityHTML =
+        '<option value="">City column</option>';
+
+    let stateHTML =
+        '<option value="">State column</option>';
+
+
+    columns.forEach(
+        function (name, index) {
+
+            cityHTML +=
+                '<option value="' +
+                index +
+                '">' +
+                escapeHTML(name) +
+                '</option>';
+
+            stateHTML +=
+                '<option value="' +
+                index +
+                '">' +
+                escapeHTML(name) +
+                '</option>';
+        }
+    );
+
+
+    cityColumn.innerHTML =
+        cityHTML;
+
+    stateColumn.innerHTML =
+        stateHTML;
+}
+
+
+/* ============================================================
+   LABEL DATA
+============================================================ */
+
+function getLabelLines(row) {
+
+    /*
+        Normal mode:
+        each selected column gets one line.
+
+        City + State mode:
+        selected city and state are combined.
+    */
+
+    const lines = [];
+
+    const useCityState =
+        joinCityState.checked &&
+        cityColumn.value !== "" &&
+        stateColumn.value !== "";
+
+
+    const cityIndex =
+        useCityState
+            ? Number(cityColumn.value)
+            : -1;
+
+
+    const stateIndex =
+        useCityState
+            ? Number(stateColumn.value)
+            : -1;
+
+
+    let cityStateAdded = false;
+
+
+    selectedColumns.forEach(
+        function (columnIndex) {
+
+            /*
+                City + State are combined
+                when both are selected.
+            */
+
+            if (
+                useCityState &&
+                (
+                    columnIndex === cityIndex ||
+                    columnIndex === stateIndex
+                )
+            ) {
+
+                if (cityStateAdded) {
+                    return;
+                }
+
+                const city =
+                    getValue(
+                        row,
+                        cityIndex
+                    );
+
+                const state =
+                    getValue(
+                        row,
+                        stateIndex
+                    );
+
+
+                let combined = "";
+
+
+                if (city && state) {
+
+                    combined =
+                        city +
+                        ", " +
+                        state;
+
+                } else {
+
+                    combined =
+                        city ||
+                        state;
+                }
+
+
+                if (combined) {
+
+                    lines.push(
+                        combined
+                    );
+                }
+
+
+                cityStateAdded = true;
+
+                return;
+            }
+
+
+            const value =
+                getValue(
+                    row,
+                    columnIndex
+                );
+
+
+            if (value) {
+                lines.push(value);
+            }
+        }
+    );
+
+
+    return lines;
+}
+
+
+/* ============================================================
+   CREATE LABEL
+============================================================ */
+
+function createLabelHTML(
+    row,
+    rowIndex
+) {
+
+    const lines =
+        getLabelLines(row);
+
+
+    let html =
+        '<div class="label">';
+
+
+    /*
+        Always start with TO.
+    */
+
+    html +=
+        '<div class="label-to">To</div>';
+
+
+    lines.forEach(
+        function (line) {
+
+            html +=
+                '<div class="label-line">' +
+                    escapeHTML(line) +
+                '</div>';
+        }
+    );
+
+
+    html +=
+        '<div class="label-footer">' +
+            'Label #' +
+            (rowIndex + 1) +
+        '</div>';
+
+
+    html +=
+        '</div>';
+
+
+    return html;
+}
+
+
+/* ============================================================
+   RENDER SCREEN LABELS
+============================================================ */
+
+function renderLabels() {
+
+    if (!rows.length) {
+
+        labelGrid.innerHTML =
+            '<div class="empty-screen">' +
+                '<div class="empty-screen-icon">' +
+                    '📄' +
+                '</div>' +
+                'Upload Excel and select columns.' +
+            '</div>';
+
+        labelCount.textContent =
+            "No labels";
+
+        return;
+    }
+
+
+    if (!selectedColumns.length) {
+
+        labelGrid.innerHTML =
+            '<div class="empty-screen">' +
+                '<div class="empty-screen-icon">' +
+                    '🏷️' +
+                '</div>' +
+                'Select at least one column.' +
+            '</div>';
+
+        labelCount.textContent =
+            rows.length +
+            " rows loaded";
+
+        return;
+    }
+
+
+    /*
+        Keep the main UI light.
+
+        Preview/Print still use every row.
+    */
+
+    const DISPLAY_LIMIT = 100;
+
+    const visibleRows =
+        rows.slice(
+            0,
+            DISPLAY_LIMIT
+        );
+
+
+    let html = "";
+
+
+    visibleRows.forEach(
+        function (row, index) {
+
+            html +=
+                createLabelHTML(
+                    row,
+                    index
+                );
+        }
+    );
+
+
+    labelGrid.innerHTML =
+        html;
+
+
+    if (
+        rows.length >
+        DISPLAY_LIMIT
+    ) {
+
+        labelCount.textContent =
+            "Showing first " +
+            DISPLAY_LIMIT +
+            " of " +
+            rows.length +
+            " labels. Preview/Print includes all.";
+
+    } else {
+
+        labelCount.textContent =
+            rows.length +
+            " labels";
+    }
+}
+
+
+/* ============================================================
+   READ EXCEL
+============================================================ */
+
+function readExcel(file) {
+
+    if (!file) {
+        return;
+    }
+
+
+    fileInfo.textContent =
+        "Reading " +
+        file.name +
+        "…";
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        function (event) {
+
+            try {
+
+                const data =
+                    new Uint8Array(
+                        event.target.result
+                    );
+
+
+                const workbook =
+                    XLSX.read(
+                        data,
+                        {
+                            type: "array",
+                            cellDates: true
+                        }
+                    );
+
+
+                const firstSheet =
+                    workbook.Sheets[
+                        workbook.SheetNames[0]
+                    ];
+
+
+                const sheetData =
+                    XLSX.utils.sheet_to_json(
+                        firstSheet,
+                        {
+                            header: 1,
+                            defval: "",
+                            raw: false
+                        }
+                    );
+
+
+                if (
+                    !sheetData ||
+                    sheetData.length < 1
+                ) {
+
+                    throw new Error(
+                        "The Excel file is empty."
+                    );
+                }
+
+
+                const headerRow =
+                    sheetData[0];
+
+
+                /*
+                    Find the maximum number of columns.
+                */
+
+                let columnCount = 0;
+
+
+                sheetData.forEach(
+                    function (row) {
+
+                        if (
+                            row.length >
+                            columnCount
+                        ) {
+
+                            columnCount =
+                                row.length;
+                        }
+                    }
+                );
+
+
+                columns = [];
+
+
+                for (
+                    let i = 0;
+                    i < columnCount;
+                    i++
+                ) {
+
+                    let name =
+                        headerRow[i];
+
+
+                    if (
+                        name === undefined ||
+                        name === null ||
+                        String(name).trim() === ""
+                    ) {
+
+                        name =
+                            "Column " +
+                            getColumnLetter(i);
+                    }
+
+
+                    columns.push(
+                        String(name).trim()
+                    );
+                }
+
+
+                /*
+                    Convert rows.
+                */
+
+                rows = [];
+
+
+                for (
+                    let r = 1;
+                    r < sheetData.length;
+                    r++
+                ) {
+
+                    const sourceRow =
+                        sheetData[r];
+
+
+                    const rowObject = {};
+
+                    let hasData = false;
+
+
+                    for (
+                        let c = 0;
+                        c < columns.length;
+                        c++
+                    ) {
+
+                        const value =
+                            sourceRow[c] === undefined
+                                ? ""
+                                : sourceRow[c];
+
+
+                        rowObject[
+                            columns[c]
+                        ] = value;
+
+
+                        if (
+                            String(value).trim() !== ""
+                        ) {
+
+                            hasData = true;
+                        }
+                    }
+
+
+                    /*
+                        Ignore completely
+                        blank Excel rows.
+                    */
+
+                    if (hasData) {
+                        rows.push(rowObject);
+                    }
+                }
+
+
+                /*
+                    Initial order = Excel order.
+
+                    User can then drag them
+                    into any order.
+                */
+
+                selectedColumns =
+                    columns.map(
+                        function (_, index) {
+                            return index;
+                        }
+                    );
+
+
+                renderColumnSelectors();
+                renderSelectedColumns();
+                renderAddressDropdowns();
+                renderLabels();
+
+
+                fileInfo.innerHTML =
+                    "✅ <strong>" +
+                    escapeHTML(file.name) +
+                    "</strong> · " +
+                    rows.length +
+                    " rows · " +
+                    columns.length +
+                    " columns";
+
+
+            } catch (error) {
+
+                console.error(error);
+
+
+                rows = [];
+                columns = [];
+                selectedColumns = [];
+
+
+                columnsContainer.innerHTML =
+                    '<div class="empty">' +
+                    'Unable to read the Excel file.' +
+                    '</div>';
+
+
+                selectedColumnsContainer.innerHTML =
+                    '<span class="empty">' +
+                    'No columns selected.' +
+                    '</span>';
+
+
+                labelGrid.innerHTML =
+                    '<div class="empty-screen">' +
+                        '<div class="empty-screen-icon">' +
+                            '⚠️' +
+                        '</div>' +
+                        escapeHTML(
+                            error.message
+                        ) +
+                    '</div>';
+
+
+                fileInfo.textContent =
+                    "Error: " +
+                    error.message;
+            }
+        };
+
+
+    reader.onerror =
+        function () {
+
+            fileInfo.textContent =
+                "Unable to read the file.";
+        };
+
+
+    reader.readAsArrayBuffer(file);
+}
+
+
+/* ============================================================
+   PREVIEW
+============================================================ */
+
+function showPreview() {
+
+    if (!rows.length) {
+
+        alert(
+            "Please upload an Excel file first."
+        );
+
+        return;
+    }
+
+
+    if (!selectedColumns.length) {
+
+        alert(
+            "Please select at least one column."
+        );
+
+        return;
+    }
+
+
+    previewPages.innerHTML =
+        "";
+
+
+    /*
+        12 labels per A4 page.
+        2 × 6.
+    */
+
+    const PER_PAGE = 12;
+
+
+    for (
+        let start = 0;
+        start < rows.length;
+        start += PER_PAGE
+    ) {
+
+        const page =
+            document.createElement(
+                "div"
+            );
+
+
+        page.className =
+            "preview-page";
+
+
+        const pageRows =
+            rows.slice(
+                start,
+                start + PER_PAGE
+            );
+
+
+        let html =
+            '<div class="label-grid">';
+
+
+        pageRows.forEach(
+            function (row, index) {
+
+                html +=
+                    createLabelHTML(
+                        row,
+                        start + index
+                    );
+            }
+        );
+
+
+        html +=
+            '</div>';
+
+
+        page.innerHTML =
+            html;
+
+
+        previewPages.appendChild(
+            page
+        );
+    }
+
+
+    previewOverlay.classList.add(
+        "active"
+    );
+}
+
+
+/* ============================================================
+   PRINT
+============================================================ */
+
+function preparePrint() {
+
+    if (!rows.length) {
+
+        alert(
+            "Please upload an Excel file first."
+        );
+
+        return false;
+    }
+
+
+    if (!selectedColumns.length) {
+
+        alert(
+            "Please select at least one column."
+        );
+
+        return false;
+    }
+
+
+    let html = "";
+
+
+    rows.forEach(
+        function (row, rowIndex) {
+
+            const lines =
+                getLabelLines(row);
+
+
+            html +=
+                '<div class="print-label">';
+
+
+            html +=
+                '<div class="print-to">' +
+                    'To' +
+                '</div>';
+
+
+            lines.forEach(
+                function (line) {
+
+                    html +=
+                        '<div class="print-line">' +
+                            escapeHTML(line) +
+                        '</div>';
+                }
+            );
+
+
+            html +=
+                '<div class="print-footer">' +
+                    '#' +
+                    (rowIndex + 1) +
+                '</div>';
+
+
+            html +=
+                '</div>';
+        }
+    );
+
+
+    printArea.innerHTML =
+        html;
+
+
+    return true;
+}
+
+
+/* ============================================================
+   EVENTS
+============================================================ */
+
+
+/*
+    File upload.
+*/
+
+fileInput.addEventListener(
+    "change",
+    function () {
+
+        const file =
+            this.files[0];
+
+
+        if (file) {
+            readExcel(file);
+        }
+
+
+        /*
+            Allow same file to be
+            selected again.
+        */
+
+        this.value = "";
+    }
+);
+
+
+/*
+    Select all.
+*/
+
+selectAllButton.addEventListener(
+    "click",
+    function () {
+
+        if (!columns.length) {
+            return;
+        }
+
+
+        selectedColumns =
+            columns.map(
+                function (_, index) {
+                    return index;
+                }
+            );
+
+
+        renderColumnSelectors();
+        renderSelectedColumns();
+        renderLabels();
+    }
+);
+
+
+/*
+    Clear all.
+*/
+
+clearAllButton.addEventListener(
+    "click",
+    function () {
+
+        selectedColumns = [];
+
+
+        renderColumnSelectors();
+        renderSelectedColumns();
+        renderLabels();
+    }
+);
+
+
+/*
+    Preview.
+*/
+
+previewButton.addEventListener(
+    "click",
+    showPreview
+);
+
+
+/*
+    Close preview.
+*/
+
+closePreviewButton.addEventListener(
+    "click",
+    function () {
+
+        previewOverlay.classList.remove(
+            "active"
+        );
+    }
+);
+
+
+/*
+    Clicking outside preview page
+    closes preview.
+*/
+
+previewOverlay.addEventListener(
+    "click",
+    function (event) {
+
+        if (
+            event.target ===
+            previewOverlay
+        ) {
+
+            previewOverlay.classList.remove(
+                "active"
+            );
+        }
+    }
+);
+
+
+/*
+    City / State options.
+*/
+
+joinCityState.addEventListener(
+    "change",
+    renderLabels
+);
+
+cityColumn.addEventListener(
+    "change",
+    renderLabels
+);
+
+stateColumn.addEventListener(
+    "change",
+    renderLabels
+);
+
+
+/*
+    Print.
+*/
+
+printButton.addEventListener(
+    "click",
+    function () {
+
+        if (!preparePrint()) {
+            return;
+        }
+
+
+        /*
+            Give browser a moment to
+            update the print DOM.
+        */
+
+        requestAnimationFrame(
+            function () {
+
+                setTimeout(
+                    function () {
+
+                        window.print();
+
+                    },
+                    50
+                );
+            }
+        );
+    }
+);
+
+
+/*
+    Escape closes preview.
+*/
+
+document.addEventListener(
+    "keydown",
+    function (event) {
+
+        if (
+            event.key === "Escape" &&
+            previewOverlay.classList.contains(
+                "active"
+            )
+        ) {
+
+            previewOverlay.classList.remove(
+                "active"
+            );
+        }
+    }
+);
+
+})();
+</script>
+
+</body>
+</html>
